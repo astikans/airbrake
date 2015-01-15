@@ -1,6 +1,6 @@
 namespace :airbrake do
   desc "Notify Airbrake of a new deploy."
-  task :deploy do
+  task deploy: :environment do
     require 'airbrake_tasks'
 
     if defined?(Rails.root)
@@ -13,12 +13,17 @@ namespace :airbrake do
       end
     end
 
+    deploy_message = ENV['DEPLOY_MESSAGE']
+
+    branch = Branch.name rescue nil
+    deploy_message = ENV['DEPLOY_MESSAGE'].gsub(/demo([^-]|\z)/, "demo-#{branch}").gsub(/production([^-]|\z)/, "production-#{branch}") if branch
+
     AirbrakeTasks.deploy(:rails_env      => ENV['TO'],
                          :scm_revision   => ENV['REVISION'],
                          :scm_repository => ENV['REPO'],
                          :local_username => ENV['USER'],
                          :api_key        => ENV['API_KEY'],
-                         :message        => ENV['DEPLOY_MESSAGE'],
+                         :message        => deploy_message,
                          :dry_run        => ENV['DRY_RUN'])
   end
 
